@@ -35,7 +35,6 @@ public class UpdateHostChecker {
     private ArrayList<String> _domainSuffixes = new ArrayList<String>();
     private String _hostName = DEFAULT_HOSTNAME;
     private Boolean _skipLocal = false;
-    private Boolean _asyncCheck = true;
     private String _scheme = DEFAULT_SCHEME;
 
     private Boolean _inCall = false;
@@ -46,23 +45,13 @@ public class UpdateHostChecker {
 
     private Pattern _regex;
 
-
-    // TODO: Instead of an async flag, just overload the checkForUpdates
-    // to perform async or sync
-    // TODO: Allow them to pass in a comparator function that is given the dictionary
-    // of filenames and matchers can produce the most recent version.
-    // TODO: Callback should provide most recent version filename/url to it...another class can perform
-    // the download and signature validation
-    // NOTE: Callback may never be called.  If there is no file available that matches the regex
-    // or connection was not made, then there is nothing to call.
-    public void checkForUpdates(Function<Dictionary<String, Matcher>, String> comparisonFunc, Consumer<Object> callback) {
+    public void checkForUpdates(Consumer<Object> callback) {
         _inCall = true;
         _callback = callback;
 
-        doCheck(comparisonFunc);
+        doCheck();
 
-        if (!_asyncCheck)
-            callback.accept(new Object());
+        callback.accept(new Object());
         // Execute thread here is async
 
     }
@@ -72,7 +61,32 @@ public class UpdateHostChecker {
         return elements[elements.length - 1].trim();
     }
 
-    private Dictionary<String, Matcher> doCheckDirectoryListing(CloseableHttpClient httpClient, URI serverUri)
+    private LatestVersion doCheckDirectoryListing(CloseableHttpClient httpClient, URI serverUri) {
+        Dictionary<String, Matcher> entries = getRemoteDirectoryContents(httpClient, serverUri);
+
+        LatestVersion v = null;
+
+
+        if (entries != null && entries.size() > 0) {
+            String key = pickLatestVersion(entries);
+            v = new LatestVersion (key, new URI (serverUri, key).toString(), entries[key]);
+        }
+
+        return v;
+    }
+
+    private String pickLatestVersion(Dictionary<String, Matcher> foundFiles) {
+        TreeSet<String> sortedFilenames = new TreeSet<String>();
+
+        Enumeration<String> keys = foundFiles.keys();
+
+        while (keys.hasMoreElements())
+            sortedFilenames.add(keys.nextElement());
+
+        return sortedFilenames.last();
+    }
+
+    private Dictionary<String, Matcher> getRemoteDirectoryContents(CloseableHttpClient httpClient, URI serverUri)
             throws IOException {
 
         Dictionary<String, Matcher> foundEntries = new Hashtable<String, Matcher>();
@@ -104,7 +118,7 @@ public class UpdateHostChecker {
         return foundEntries;
     }
 
-    private void doCheck(Function<Dictionary<String, Matcher>, String> comparisonFunc) {
+    private void doCheck() {
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
         for (String suffix : _domainSuffixes) {
@@ -119,10 +133,7 @@ public class UpdateHostChecker {
 
             try {
 
-                Dictionary<String, Matcher> found = doCheckDirectoryListing(httpClient, serverUri);
-
-                String latestVersion = comparisonFunc.apply(found);
-
+                LatestVersion latestVersion = doCheckDirectoryListing(httpClient, serverUri);
                 System.out.println(latestVersion);
 
             } catch (IOException ex) {
@@ -160,11 +171,6 @@ public class UpdateHostChecker {
         public RegexValidatingBuilder withFieldExtractRegex(Pattern regex) {
             _inst._regex = regex;
             return new RegexValidatingBuilder();
-        }
-
-        public Builder checkSynchronously() {
-            _inst._asyncCheck = false;
-            return this;
         }
 
         public Builder maxRetries(int retryCount) {
