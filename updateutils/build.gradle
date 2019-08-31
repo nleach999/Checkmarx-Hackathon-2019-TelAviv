@@ -13,7 +13,7 @@ plugins {
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
-version = '0.0.1'
+
 
 // repositories {
 //     // Use jcenter for resolving dependencies.
@@ -28,7 +28,8 @@ dependencies {
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     // implementation 'com.google.guava:guava:27.1-jre'
-    implementation "org.apache.httpcomponents:httpclient:4.5.9","org.jsoup:jsoup:1.12.1"
+    implementation "org.apache.httpcomponents:httpclient:4.5.9","org.jsoup:jsoup:1.12.1",
+        project(':netutils')
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
