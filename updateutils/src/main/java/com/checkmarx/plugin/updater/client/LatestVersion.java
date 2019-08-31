@@ -1,5 +1,7 @@
 package com.checkmarx.plugin.updater.client;
 
+import java.util.regex.Matcher;
+
 public class LatestVersion {
 
     public LatestVersion(String filename, String fileURI, Matcher matches) {

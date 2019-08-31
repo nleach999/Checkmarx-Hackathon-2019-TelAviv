@@ -5,9 +5,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.TreeSet;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,22 +39,22 @@ public class UpdateHostChecker {
     private String _scheme = DEFAULT_SCHEME;
 
     private Boolean _inCall = false;
-    private Consumer<Object> _callback;
+    private Consumer<LatestVersion> _resolvedCallback;
 
     private int _maxRetries = 3;
     private int _retryDelaySeconds = 300;
 
     private Pattern _regex;
 
-    public void checkForUpdates(Consumer<Object> callback) {
+    public void checkForUpdates(Consumer<LatestVersion> callback) {
         _inCall = true;
-        _callback = callback;
+        _resolvedCallback = callback;
 
-        doCheck();
+        LatestVersion v = doCheck();
 
-        callback.accept(new Object());
+        if (v != null)
+        _resolvedCallback.accept(v);
         // Execute thread here is async
-
     }
 
     private String getCharsetFromContentType(String contentType) {
@@ -61,15 +62,19 @@ public class UpdateHostChecker {
         return elements[elements.length - 1].trim();
     }
 
-    private LatestVersion doCheckDirectoryListing(CloseableHttpClient httpClient, URI serverUri) {
+    private LatestVersion doCheckDirectoryListing(CloseableHttpClient httpClient, URI serverUri) throws IOException {
         Dictionary<String, Matcher> entries = getRemoteDirectoryContents(httpClient, serverUri);
 
         LatestVersion v = null;
 
-
         if (entries != null && entries.size() > 0) {
             String key = pickLatestVersion(entries);
-            v = new LatestVersion (key, new URI (serverUri, key).toString(), entries[key]);
+
+            try {
+                v = new LatestVersion(key, new URIBuilder(serverUri).setPath(key).build().toString(), entries.get(key));
+            } catch (URISyntaxException ex) {
+                // TODO: Handle exception
+            }
         }
 
         return v;
@@ -118,10 +123,14 @@ public class UpdateHostChecker {
         return foundEntries;
     }
 
-    private void doCheck() {
+    private LatestVersion doCheck() {
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
+        LatestVersion latestVersion = null;
+
         for (String suffix : _domainSuffixes) {
+            if (latestVersion != null)
+                break;
 
             URI serverUri = null;
 
@@ -132,16 +141,14 @@ public class UpdateHostChecker {
             }
 
             try {
-
-                LatestVersion latestVersion = doCheckDirectoryListing(httpClient, serverUri);
-                System.out.println(latestVersion);
-
+                latestVersion = doCheckDirectoryListing(httpClient, serverUri);
             } catch (IOException ex) {
                 // TODO: increment try count, delay for retry, etc.
             }
 
         }
 
+        return latestVersion;
     }
 
     public static class Builder {
