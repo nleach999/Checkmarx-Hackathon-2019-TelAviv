@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+mainClassName = 'com.checkmarx.CmdTest'
+
+
+dependencies {
+    implementation project(':netutils'), project(":updateutils"),
+    "commons-cli:commons-cli:1.4"
+
+}
+
+

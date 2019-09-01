@@ -29,6 +29,10 @@ public class UpdateHostChecker {
     private static String DEFAULT_HOSTNAME = "cxupdate";
     private static String DEFAULT_SCHEME = "http";
 
+    public static String getDefaultHostname() {
+        return DEFAULT_HOSTNAME;
+    }
+
     public static Builder builder() {
         return new UpdateHostChecker.Builder();
     }
@@ -50,11 +54,12 @@ public class UpdateHostChecker {
         _inCall = true;
         _resolvedCallback = callback;
 
-        LatestVersion v = doCheck();
+        LatestVersion v = doLocalResolution();
+        if (v == null)
+            v = doRemoteResolution();
 
         if (v != null)
-        _resolvedCallback.accept(v);
-        // Execute thread here is async
+            _resolvedCallback.accept(v);
     }
 
     private String getCharsetFromContentType(String contentType) {
@@ -62,7 +67,8 @@ public class UpdateHostChecker {
         return elements[elements.length - 1].trim();
     }
 
-    private LatestVersion doCheckDirectoryListing(CloseableHttpClient httpClient, URI serverUri) throws IOException {
+    private LatestVersion doResolveRemoteDirectoryContents(CloseableHttpClient httpClient, URI serverUri)
+            throws IOException {
         Dictionary<String, Matcher> entries = getRemoteDirectoryContents(httpClient, serverUri);
 
         LatestVersion v = null;
@@ -123,32 +129,82 @@ public class UpdateHostChecker {
         return foundEntries;
     }
 
-    private LatestVersion doCheck() {
+    private LatestVersion doLocalResolution() {
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
         LatestVersion latestVersion = null;
 
-        for (String suffix : _domainSuffixes) {
-            if (latestVersion != null)
-                break;
-
-            URI serverUri = null;
+        try {
+            URI noDomain = null, mDNS = null;
 
             try {
-                serverUri = new URIBuilder().setHost(_hostName + "." + suffix).setScheme(_scheme).build();
+                noDomain = formServerURI();
+                mDNS = formServerURI("local");
             } catch (URISyntaxException e) {
-                continue;
             }
 
             try {
-                latestVersion = doCheckDirectoryListing(httpClient, serverUri);
-            } catch (IOException ex) {
-                // TODO: increment try count, delay for retry, etc.
-            }
+                latestVersion = doResolveRemoteDirectoryContents(httpClient, noDomain);
 
+                if (latestVersion == null)
+                    latestVersion = doResolveRemoteDirectoryContents(httpClient, mDNS);
+
+            } catch (IOException e) {
+                // TODO: Increment retry, retry delay, etc.
+            }
+        } finally {
+            try {
+                httpClient.close();
+            } catch (IOException e) {
+                // Intentionally ignoring the exception here.
+            }
         }
 
         return latestVersion;
+    }
+
+    private LatestVersion doRemoteResolution() {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        LatestVersion latestVersion = null;
+
+        try {
+
+            for (String suffix : _domainSuffixes) {
+                if (latestVersion != null)
+                    break;
+
+                URI serverUri = null;
+
+                try {
+                    serverUri = formServerURI(suffix);
+                } catch (URISyntaxException e) {
+                    continue;
+                }
+
+                try {
+                    latestVersion = doResolveRemoteDirectoryContents(httpClient, serverUri);
+                } catch (IOException ex) {
+                    // TODO: increment try count, delay for retry, etc.
+                }
+
+            }
+        } finally {
+            try {
+                httpClient.close();
+            } catch (IOException e) {
+                // Intentionally ignoring the exception here.
+            }
+        }
+
+        return latestVersion;
+    }
+
+    private URI formServerURI(String suffix) throws URISyntaxException {
+        return new URIBuilder().setHost(_hostName + "." + suffix).setScheme(_scheme).build();
+    }
+
+    private URI formServerURI() throws URISyntaxException {
+        return new URIBuilder().setHost(_hostName).setScheme(_scheme).build();
     }
 
     public static class Builder {

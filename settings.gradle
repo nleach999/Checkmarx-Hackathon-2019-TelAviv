@@ -10,3 +10,4 @@
 rootProject.name = 'CxPluginUpdater'
 include 'netutils'
 include 'updateutils'
+include 'cmdline_tester'

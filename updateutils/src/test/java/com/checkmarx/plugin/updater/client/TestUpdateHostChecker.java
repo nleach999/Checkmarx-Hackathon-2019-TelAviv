@@ -60,30 +60,6 @@ public class TestUpdateHostChecker {
         fail();
     }
 
-    boolean flag = false;
-
-    @Test
-    public void Test() {
-        try {
-            UpdateHostChecker inst = UpdateHostChecker.builder()
-                    .withUpdateHostName("ec2-3-14-71-124")
-                    .addSearchDomainSuffix(".us-east-2.compute.amazonaws.com").withFieldExtractRegex(_testRegex)
-                    .build();
-
-            inst.checkForUpdates((foo) -> {
-                System.out.println (foo);
-            });
-
-        } catch (MisconfiguredException | BadBuilderException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void TestAsyncCheck() {
-        fail();
-    }
-
     @Test
     public void TestMaxRetriesAreAttempted() {
         fail();
