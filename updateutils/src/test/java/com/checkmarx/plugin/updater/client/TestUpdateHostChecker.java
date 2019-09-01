@@ -3,10 +3,6 @@ package com.checkmarx.plugin.updater.client;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.TreeSet;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.checkmarx.plugin.updater.client.exceptions.BadBuilderException;
@@ -28,8 +24,7 @@ public class TestUpdateHostChecker {
     public void TestNoSearchSuffixesThrowsExceptionOnBuild() {
 
         try {
-
-            UpdateHostChecker inst = UpdateHostChecker.builder().withFieldExtractRegex(_testRegex).build();
+            UpdateHostChecker.builder().withFieldExtractRegex(_testRegex).build();
         } catch (MisconfiguredException ex) {
             assertTrue(true);
             return;

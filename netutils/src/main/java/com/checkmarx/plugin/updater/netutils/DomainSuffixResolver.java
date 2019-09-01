@@ -6,6 +6,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Stack;
+import java.util.concurrent.Future;
 
 public class DomainSuffixResolver {
 
@@ -32,6 +33,8 @@ public class DomainSuffixResolver {
 
         return suffix.length() == 0 ? null : suffix.toString();
     }
+
+    
 
     public static Iterable<String> resolveLocalDomainSuffixes() throws SocketException {
 

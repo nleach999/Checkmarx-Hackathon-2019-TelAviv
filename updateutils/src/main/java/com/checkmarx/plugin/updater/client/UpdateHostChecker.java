@@ -8,6 +8,9 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,24 +45,43 @@ public class UpdateHostChecker {
     private Boolean _skipLocal = false;
     private String _scheme = DEFAULT_SCHEME;
 
-    private Boolean _inCall = false;
     private Consumer<LatestVersion> _resolvedCallback;
 
     private int _maxRetries = 3;
+    private int _currentRetries = 0;
     private int _retryDelaySeconds = 300;
 
     private Pattern _regex;
+    ExecutorService _executor = Executors.newSingleThreadExecutor();
 
-    public void checkForUpdates(Consumer<LatestVersion> callback) {
-        _inCall = true;
+    public Future<?> checkForUpdates(Consumer<LatestVersion> callback) {
         _resolvedCallback = callback;
 
-        LatestVersion v = doLocalResolution();
-        if (v == null)
-            v = doRemoteResolution();
+        _currentRetries = 0;
 
-        if (v != null)
-            _resolvedCallback.accept(v);
+        return _executor.submit(() -> {
+
+            while (_currentRetries < _maxRetries) {
+                LatestVersion v = doLocalResolution();
+                if (v == null)
+                    v = doRemoteResolution();
+
+                if (v != null)
+                    _resolvedCallback.accept(v);
+
+                if (v == null && _currentRetries < _maxRetries) {
+                    _currentRetries++;
+                    try {
+                        Thread.sleep(_retryDelaySeconds * 1000);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }
+            _executor.shutdown();
+
+        });
+
     }
 
     private String getCharsetFromContentType(String contentType) {
@@ -79,7 +101,7 @@ public class UpdateHostChecker {
             try {
                 v = new LatestVersion(key, new URIBuilder(serverUri).setPath(key).build().toString(), entries.get(key));
             } catch (URISyntaxException ex) {
-                // TODO: Handle exception
+                // Intentionally ignoring the exception here.
             }
         }
 
@@ -150,7 +172,7 @@ public class UpdateHostChecker {
                     latestVersion = doResolveRemoteDirectoryContents(httpClient, mDNS);
 
             } catch (IOException e) {
-                // TODO: Increment retry, retry delay, etc.
+                // Intentionally ignoring the exception here.
             }
         } finally {
             try {
@@ -184,7 +206,7 @@ public class UpdateHostChecker {
                 try {
                     latestVersion = doResolveRemoteDirectoryContents(httpClient, serverUri);
                 } catch (IOException ex) {
-                    // TODO: increment try count, delay for retry, etc.
+                    // Intentionally ignoring the exception here.
                 }
 
             }

@@ -1,6 +1,10 @@
 package com.checkmarx;
 
 import java.net.SocketException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import com.checkmarx.plugin.updater.client.LatestVersion;
@@ -35,14 +39,51 @@ public class CmdTest {
                 "The regular expression used to detect matches in listing entries" + " returned from the update host.")
                 .hasArg().build());
 
+        _opts.addOption(Option.builder().longOpt("timeout").hasArg()
+                .desc("Timeout for discovering available updates. Default: 60 seconds").argName("seconds").build());
+
         _opts.addOption(Option.builder("d")
                 .desc("Add search domain suffix. Maybe repeated, also accepts multiple arguments.").hasArgs().build());
 
     }
 
+    private boolean _updateResponse = false;
+    private LatestVersion _responseVersion = null;
+    private long _timeoutSeconds = 60;
+
     private void updateCheckCallback(LatestVersion v) {
-        System.out.println("Latest version response detected.");
-        System.out.println(v);
+        _updateResponse = true;
+        _responseVersion = v;
+    }
+
+    private UpdateHostChecker hostCheckerFactory(CommandLine cmd) throws MisconfiguredException, BadBuilderException {
+        UpdateHostChecker.Builder builderInst = UpdateHostChecker.builder();
+
+        if (cmd.hasOption("h"))
+            builderInst = builderInst.withUpdateHostName(cmd.getOptionValue("h"));
+
+        if (cmd.hasOption("d")) {
+            for (String domainSuffix : cmd.getOptionValues("d"))
+                builderInst = builderInst.addSearchDomainSuffix(domainSuffix);
+        }
+
+        if (cmd.hasOption("timeout"))
+            _timeoutSeconds = Long.parseLong(cmd.getOptionValue("timeout"));
+
+        Iterable<String> localSuffixes = null;
+
+        if (!cmd.hasOption("skipLocal"))
+            try {
+                localSuffixes = DomainSuffixResolver.resolveLocalDomainSuffixes();
+            } catch (SocketException e1) {
+                System.err.println("Did not resolve local suffixes.");
+            }
+
+        if (localSuffixes != null)
+            for (String domainSuffix : localSuffixes)
+                builderInst = builderInst.addSearchDomainSuffix(domainSuffix);
+
+        return builderInst.withFieldExtractRegex(Pattern.compile(cmd.getOptionValue("r"))).build();
     }
 
     private void execute(String[] args) {
@@ -62,40 +103,40 @@ public class CmdTest {
             return;
         }
 
-        UpdateHostChecker.Builder builderInst = UpdateHostChecker.builder();
+        try {
+            UpdateHostChecker checkerInst = hostCheckerFactory(cmd);
 
-        if (cmd.hasOption("h"))
-            builderInst = builderInst.withUpdateHostName(cmd.getOptionValue("h"));
+            Future<?> f = checkerInst.checkForUpdates(this::updateCheckCallback);
 
-        if (cmd.hasOption("d")) {
-            for (String domainSuffix : cmd.getOptionValues("d"))
-                builderInst = builderInst.addSearchDomainSuffix(domainSuffix);
-        }
+            System.out.println("Waiting for update check to respond....");
 
-        Iterable<String> localSuffixes = null;
-
-        if (!cmd.hasOption("skipLocal"))
             try {
-                localSuffixes = DomainSuffixResolver.resolveLocalDomainSuffixes();
-            } catch (SocketException e1) {
-                System.err.println("Did not resolve local suffixes.");
+
+                f.get(_timeoutSeconds, TimeUnit.SECONDS);
+
+                if (f.isDone() && !_updateResponse) {
+                    System.out.println("Update check completed, no response.");
+                } else {
+                    System.out.println("Latest version retrieved.");
+                    System.out.println(_responseVersion);
+
+                    if (_responseVersion.getRegexMatches().groupCount() > 0) {
+                        System.out.println("Matched groups:");
+                        for (int i = 0; i < _responseVersion.getRegexMatches().groupCount(); i++) {
+                            System.out.println(String.format("Name: [%s] Value: [%s]",
+                                    _responseVersion.getRegexMatches().group(i), "foo"));
+                        }
+
+                    }
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            } catch (TimeoutException te) {
+                System.err.println ("Timeout");
+                f.cancel(true);
             }
 
-        if (localSuffixes != null)
-            for (String domainSuffix : localSuffixes)
-                builderInst = builderInst.addSearchDomainSuffix(domainSuffix);
-
-        try {
-            UpdateHostChecker checkerInst = builderInst.withFieldExtractRegex(Pattern.compile(cmd.getOptionValue("r")))
-                    .build();
-
-            checkerInst.checkForUpdates(this::updateCheckCallback);
-
-        } catch (MisconfiguredException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (BadBuilderException e) {
-            // TODO Auto-generated catch block
+        } catch (MisconfiguredException | BadBuilderException e) {
             e.printStackTrace();
         }
 
