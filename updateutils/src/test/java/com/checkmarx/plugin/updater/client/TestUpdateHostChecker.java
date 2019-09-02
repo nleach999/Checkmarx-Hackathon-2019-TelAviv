@@ -54,15 +54,4 @@ public class TestUpdateHostChecker {
 
         fail();
     }
-
-    @Test
-    public void TestMaxRetriesAreAttempted() {
-        fail();
-    }
-
-    @Test
-    public void TestRetryDelayIsHonored() {
-        fail();
-    }
-
 }

@@ -1,6 +1,9 @@
 package com.checkmarx;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.SocketException;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +21,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -35,15 +39,38 @@ public class CmdTest {
         _opts.addOption("sl", "skipLocal", false,
                 "Skip domain suffix resolution of domain suffixes assigned to network adapters on local machine.");
 
-        _opts.addOption(Option.builder("r").longOpt("regex").required().desc(
-                "The regular expression used to detect matches in listing entries" + " returned from the update host.")
+        OptionGroup regexOpts = new OptionGroup();
+        regexOpts.addOption(Option.builder().longOpt("regex").required()
+                .desc("The regular expression used to detect matches in listing entries returned from the update host.")
                 .hasArg().build());
+        regexOpts.addOption(Option.builder().longOpt("regex-name").required().desc(
+                "The name of the property holding the regular expression in the regular expression properties file.")
+                .hasArg().build());
+        _opts.addOptionGroup(regexOpts);
+
+        _opts.addOption(Option.builder().longOpt("regex-props").hasArg().argName("file path")
+                .desc("A path to a .properties file containing regular expressions assigned to individual properties.")
+                .build());
 
         _opts.addOption(Option.builder().longOpt("timeout").hasArg()
                 .desc("Timeout for discovering available updates. Default: 60 seconds").argName("seconds").build());
 
         _opts.addOption(Option.builder("d")
                 .desc("Add search domain suffix. Maybe repeated, also accepts multiple arguments.").hasArgs().build());
+
+        _opts.addOption(Option.builder().hasArg(false).longOpt("no-download")
+                .desc("Do not download the latest version of the plugin detected through the version resolution.")
+                .build());
+
+        _opts.addOption(Option.builder().hasArg().longOpt("max-dl-mbytes").argName("MEGABYTES")
+                .desc("The maximum size, in megabytes, for the plugin to allow download.").build());
+
+        OptionGroup signatureGroup = new OptionGroup();
+        signatureGroup.addOption(Option.builder().longOpt("skip-verify").hasArg(false)
+                .desc("Skip the signature verification of the downloaded payload.").build());
+        signatureGroup.addOption(Option.builder().hasArg().longOpt("key-file")
+                .desc("A path to a file with a public key used to verify the signature of the plugin.").build());
+        _opts.addOptionGroup(signatureGroup);
 
     }
 
@@ -56,15 +83,16 @@ public class CmdTest {
         _responseVersion = v;
     }
 
-    private UpdateHostChecker hostCheckerFactory(CommandLine cmd) throws MisconfiguredException, BadBuilderException {
+    private UpdateHostChecker hostCheckerFactory(CommandLine cmd)
+            throws MisconfiguredException, BadBuilderException, IOException {
         UpdateHostChecker.Builder builderInst = UpdateHostChecker.builder();
 
         if (cmd.hasOption("h"))
-            builderInst = builderInst.withUpdateHostName(cmd.getOptionValue("h"));
+            builderInst.withUpdateHostName(cmd.getOptionValue("h"));
 
         if (cmd.hasOption("d")) {
             for (String domainSuffix : cmd.getOptionValues("d"))
-                builderInst = builderInst.addSearchDomainSuffix(domainSuffix);
+                builderInst.addSearchDomainSuffix(domainSuffix);
         }
 
         if (cmd.hasOption("timeout"))
@@ -81,9 +109,23 @@ public class CmdTest {
 
         if (localSuffixes != null)
             for (String domainSuffix : localSuffixes)
-                builderInst = builderInst.addSearchDomainSuffix(domainSuffix);
+                builderInst.addSearchDomainSuffix(domainSuffix);
 
-        return builderInst.withFieldExtractRegex(Pattern.compile(cmd.getOptionValue("r"))).build();
+        Pattern regexPattern = null;
+
+        if (cmd.hasOption("regex")) {
+            regexPattern = Pattern.compile(cmd.getOptionValue("regex"));
+        } else if (cmd.hasOption("regex-name") && cmd.hasOption("regex-props")) {
+            FileInputStream f = new FileInputStream(cmd.getOptionValue("regex-props"));
+
+            Properties props = new Properties();
+            props.load(f);
+            f.close();
+
+            regexPattern = Pattern.compile(props.getProperty("regex-name"));
+        }
+
+        return builderInst.withFieldExtractRegex(regexPattern).build();
     }
 
     private void execute(String[] args) {
@@ -132,12 +174,14 @@ public class CmdTest {
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             } catch (TimeoutException te) {
-                System.err.println ("Timeout");
+                System.err.println("Timeout");
                 f.cancel(true);
             }
 
         } catch (MisconfiguredException | BadBuilderException e) {
             e.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
         }
 
     }

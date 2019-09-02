@@ -6,7 +6,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Stack;
-import java.util.concurrent.Future;
+
 
 public class DomainSuffixResolver {
 

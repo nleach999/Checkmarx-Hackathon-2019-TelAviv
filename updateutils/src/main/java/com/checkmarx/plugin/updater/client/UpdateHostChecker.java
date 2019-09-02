@@ -62,7 +62,10 @@ public class UpdateHostChecker {
         return _executor.submit(() -> {
 
             while (_currentRetries < _maxRetries) {
-                LatestVersion v = doLocalResolution();
+                LatestVersion v = null;
+                if (!_skipLocal)
+                    v = doLocalResolution();
+
                 if (v == null)
                     v = doRemoteResolution();
 
@@ -246,6 +249,9 @@ public class UpdateHostChecker {
 
                 if (_inst._domainSuffixes.size() <= 0)
                     throw new MisconfiguredException("No domain search suffixes have been supplied");
+
+                if (_inst._regex == null)
+                    throw new MisconfiguredException("No regular expression for matching was provided.");
 
                 UpdateHostChecker retVal = _inst;
                 _inst = null;
