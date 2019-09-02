@@ -54,6 +54,12 @@ public class UpdateHostChecker {
     private Pattern _regex;
     ExecutorService _executor = Executors.newSingleThreadExecutor();
 
+
+    public void forceShutdown ()
+    {
+        _executor.shutdown();
+    }
+
     public Future<?> checkForUpdates(Consumer<LatestVersion> callback) {
         _resolvedCallback = callback;
 
@@ -61,8 +67,9 @@ public class UpdateHostChecker {
 
         return _executor.submit(() -> {
 
-            while (_currentRetries < _maxRetries) {
-                LatestVersion v = null;
+            LatestVersion v = null;
+
+            while (_currentRetries < _maxRetries && v == null) {
                 if (!_skipLocal)
                     v = doLocalResolution();
 
