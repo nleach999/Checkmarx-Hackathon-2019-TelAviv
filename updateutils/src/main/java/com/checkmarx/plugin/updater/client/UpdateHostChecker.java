@@ -54,9 +54,7 @@ public class UpdateHostChecker {
     private Pattern _regex;
     ExecutorService _executor = Executors.newSingleThreadExecutor();
 
-
-    public void forceShutdown ()
-    {
+    public void forceShutdown() {
         _executor.shutdown();
     }
 

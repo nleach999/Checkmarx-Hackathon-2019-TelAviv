@@ -3,6 +3,8 @@ package com.checkmarx;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -10,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
+import com.checkmarx.plugin.downloader.PluginDownloader;
 import com.checkmarx.plugin.updater.client.LatestVersion;
 import com.checkmarx.plugin.updater.client.UpdateHostChecker;
 import com.checkmarx.plugin.updater.client.exceptions.BadBuilderException;
@@ -180,6 +183,47 @@ public class CmdTest {
         return builderInst.withFieldExtractRegex(regexPattern).build();
     }
 
+    private void dumpRegexMatches(CommandLine cmd, LatestVersion v) {
+        if (_responseVersion.getRegexMatches().groupCount() > 0 && cmd.hasOption(OPTION_REGEX_GROUP)) {
+            System.out.println("Matched groups:");
+            for (String groupName : cmd.getOptionValues(OPTION_REGEX_GROUP)) {
+                System.out.println(String.format("Name: [%s] Value: [%s]", groupName,
+                        _responseVersion.getRegexMatches().group(groupName)));
+            }
+        }
+    }
+
+    private void performDownload(CommandLine cmd, LatestVersion v) throws URISyntaxException {
+
+        if (cmd.hasOption(OPTION_NO_DOWNLOAD)) {
+            System.out.println("Download skipped.");
+            return;
+        }
+
+        PluginDownloader.Builder pdBuilder = PluginDownloader.builder().withPluginURI(new URI(v.getFileURI()))
+                .withDownloadFilename(v.getFilename());
+
+        if (cmd.hasOption(OPTION_MAX_DL))
+            pdBuilder.withMaxPluginSizeInMegabytes(Long.parseLong(cmd.getOptionValue(OPTION_MAX_DL)));
+
+        PluginDownloader pdInst = pdBuilder.build();
+
+        Future<?> downloadFuture = pdInst.doDownload((foo) -> {
+            System.out.println("Progress Callback: " + foo);
+        });
+
+        try {
+            downloadFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+        }
+
+        if (pdInst.isDownloadComplete())
+            System.out.println("Download completed successfully");
+        else
+            System.out.println("Download FAILED");
+
+    }
+
     private void execute(String[] args) {
         CommandLineParser p = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -192,7 +236,7 @@ public class CmdTest {
             System.err.println(ex.getMessage());
         }
 
-        if (cmd == null || cmd.hasOption("?") || cmd.getOptions().length == 0) {
+        if (cmd == null || cmd.hasOption(OPTION_HELP) || cmd.getOptions().length == 0) {
             formatter.printHelp("cmdtest [OPTIONS]", _opts);
             return;
         }
@@ -200,34 +244,27 @@ public class CmdTest {
         try {
             UpdateHostChecker checkerInst = hostCheckerFactory(cmd);
 
-            Future<?> f = checkerInst.checkForUpdates(this::updateCheckCallback);
+            Future<?> updateRespFuture = checkerInst.checkForUpdates(this::updateCheckCallback);
 
             System.out.println("Waiting for update check to respond....");
 
             try {
 
-                f.get(_timeoutSeconds, TimeUnit.SECONDS);
+                updateRespFuture.get(_timeoutSeconds, TimeUnit.SECONDS);
 
-                if (f.isDone() && !_updateResponse) {
+                if (updateRespFuture.isDone() && !_updateResponse) {
                     System.out.println("Update check completed, no response.");
                 } else {
                     System.out.println("Latest version retrieved.");
                     System.out.println(_responseVersion);
-
-                    if (_responseVersion.getRegexMatches().groupCount() > 0 && cmd.hasOption(OPTION_REGEX_GROUP)) {
-                        System.out.println("Matched groups:");
-                        for (String groupName : cmd.getOptionValues(OPTION_REGEX_GROUP)) {
-                            System.out.println(String.format("Name: [%s] Value: [%s]", groupName,
-                                    _responseVersion.getRegexMatches().group(groupName)));
-                        }
-
-                    }
+                    dumpRegexMatches(cmd, _responseVersion);
+                    performDownload(cmd, _responseVersion);
                 }
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException | ExecutionException | URISyntaxException e) {
                 e.printStackTrace();
             } catch (TimeoutException te) {
                 System.err.println("Timeout");
-                // f.cancel(true);
+                updateRespFuture.cancel(true);
                 checkerInst.forceShutdown();
             }
 
