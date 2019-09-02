@@ -29,7 +29,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class UpdateHostChecker {
-    private static String DEFAULT_HOSTNAME = "cxupdate";
+    private static String DEFAULT_HOSTNAME = "cxpluginupdate";
     private static String DEFAULT_SCHEME = "http";
 
     public static String getDefaultHostname() {
