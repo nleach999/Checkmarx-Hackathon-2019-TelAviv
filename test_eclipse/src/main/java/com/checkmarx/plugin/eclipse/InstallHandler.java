@@ -29,6 +29,7 @@ public class InstallHandler extends AbstractHandler {
 
     @Override
     public boolean isEnabled() {
-        return HelloWorld.isVersionGreaterThanCurrent (HelloWorld.getDefault ().getLatestVersion() );
+        return HelloWorld.getDefault().isReady()
+                && HelloWorld.isVersionGreaterThanCurrent(HelloWorld.getDefault().getLatestVersion());
     }
 }

@@ -26,4 +26,9 @@ public class LatestVersionHandler extends AbstractHandler {
 		return null;
 	}
 
+	@Override
+	public boolean isEnabled() {
+		return HelloWorld.getDefault().isReady();
+	}
+
 }

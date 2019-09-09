@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 import com.checkmarx.plugin.downloader.PluginDownloader;
 import com.checkmarx.plugin.updater.client.LatestVersion;
 import com.checkmarx.plugin.updater.client.UpdateHostChecker;
+import com.checkmarx.plugin.updater.client.exceptions.BadBuilderException;
+import com.checkmarx.plugin.updater.client.exceptions.MisconfiguredException;
 import com.checkmarx.plugin.updater.netutils.DomainSuffixResolver;
 
 import org.apache.commons.io.FileUtils;
@@ -33,11 +35,10 @@ public class HelloWorld extends AbstractUIPlugin {
 	private Pattern _matchRegex = Pattern.compile(
 			"(?<filename>TestPlugin)-(?<major>\\d{2})\\.(?<minor>\\d{2})\\.(?<revision>\\d{2})_{0,1}(?<custom>.+)?\\.jar");
 
-	private UpdateHostChecker _hc;
+	private UpdateHostChecker _hc = null;
 	private Iterable<String> _localSuffixes;
 
 	private String _archiveName = null;
-
 
 	public HelloWorld() {
 	}
@@ -76,12 +77,11 @@ public class HelloWorld extends AbstractUIPlugin {
 		File downloaded = new File(FileSystems.getDefault().getPath(cwd, _version.getFilename()).toString());
 		File installed = new File(FileSystems.getDefault().getPath(cwd, "dropins", _version.getFilename()).toString());
 		File old = new File(FileSystems.getDefault().getPath(cwd, "dropins", _archiveName).toString());
-	
 
 		try {
 			FileUtils.copyFile(downloaded, installed, true);
 			old.delete();
-			downloaded.delete ();
+			downloaded.delete();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -133,6 +133,20 @@ public class HelloWorld extends AbstractUIPlugin {
 			displayVersionDialog("New Version Available");
 	}
 
+	public void initialize(Iterable<String> domainSuffixes) {
+		_localSuffixes = domainSuffixes;
+
+		try {
+			_hc = UpdateHostChecker.builder().withDomainSuffixes(_localSuffixes).withFieldExtractRegex(_matchRegex)
+					.build();
+		} catch (MisconfiguredException | BadBuilderException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		_hc.checkForUpdates(this::updateCheckCallback);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -142,17 +156,15 @@ public class HelloWorld extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 
-		_localSuffixes = DomainSuffixResolver.resolveLocalDomainSuffixes();
-
 		_pluginVersion = context.getBundle().getHeaders().get("Bundle-Version");
 
 		_archiveName = context.getBundle().getHeaders().get("Bundle-Name");
-		
-		_hc = UpdateHostChecker.builder().withDomainSuffixes(_localSuffixes).withFieldExtractRegex(_matchRegex).build();
-
-		_hc.checkForUpdates(this::updateCheckCallback);
 
 		plugin = this;
+	}
+
+	public Boolean isReady() {
+		return _version != null;
 	}
 
 	/*
