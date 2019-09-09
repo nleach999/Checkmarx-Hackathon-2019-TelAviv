@@ -12,10 +12,10 @@ import com.checkmarx.plugin.updater.client.LatestVersion;
 import com.checkmarx.plugin.updater.client.UpdateHostChecker;
 import com.checkmarx.plugin.updater.client.exceptions.BadBuilderException;
 import com.checkmarx.plugin.updater.client.exceptions.MisconfiguredException;
-import com.checkmarx.plugin.updater.netutils.DomainSuffixResolver;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -111,7 +111,7 @@ public class HelloWorld extends AbstractUIPlugin {
 
 	public void displayVersionDialog(String title) {
 		Display display = new Display();
-		Shell dialog = new Shell(display);
+		Shell dialog = new Shell(display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
 		dialog.setText(title);
 		dialog.setSize(450, 200);
 		dialog.open();
