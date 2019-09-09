@@ -26,6 +26,7 @@ jar {
 }
 
 
+// Hack the OSGI platform name so the eclipse plugin dependencies can resolve.
 configurations.all {
     resolutionStrategy {
         eachDependency { DependencyResolveDetails details -> 

@@ -1,6 +1,11 @@
 allprojects {
 
     version = '00.00.01'
+
+    ext {
+            jarName = "TestPlugin"
+    }
+
     repositories {
 
         mavenCentral()
@@ -27,27 +32,41 @@ configurations {
   childJars
 }
 
+task runCmdLine(type: Exec) {
+
+    commandLine 'java', '-jar', "build/libs/${jarName}-${version}.jar", 
+                "-h",
+                "localhost",
+                "-regex-name",
+                "extract-example",
+                "-regex-props",
+                "cmdline_tester/regex.properties",
+                "-g",
+                "filename",
+                "major",
+                "minor",
+                "revision",
+                "custom",
+                "-t",
+                "15"
+}
+
+
+// Bundle the command line tester with the eclipse plugin as a fat jar.
 jar {
-    archiveBaseName = "TestPlugin"
-    from "test_eclipse/plugin.xml"
+    archiveBaseName = jarName
+   
     dependsOn configurations.childJars
     from { configurations.childJars.collect { zipTree(it) } }
 
-
+    from "test_eclipse/plugin.xml" include ("*")
 
     from 
     {
         subprojects.collect ({"${it.buildDir}/classes/java/main"})
     } include ("**/*.class")
 
-    // from 
-    // {
-        // project(":cmdline_tester").configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    // }
 
-    eachFile ( {FileCopyDetails fcd ->
-    println fcd
-    })
     
     manifest {
         attributes (
@@ -66,7 +85,6 @@ jar {
 }
 
 dependencies {
-
     implementation project(":test_eclipse"), project (":cmdline_tester")
     subprojects.each {
         childJars project(it.path)
