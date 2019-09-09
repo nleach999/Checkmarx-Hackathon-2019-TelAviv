@@ -74,7 +74,7 @@ jar {
             'Require-Bundle': 'org.eclipse.ui,org.eclipse.core.runtime',
             'Bundle-ActivationPolicy': 'lazy',
             'Bundle-ManifestVersion': '2',
-            'Bundle-Name': 'HelloWorld',
+            'Bundle-Name': "${jarName}-${project.version}.jar",
             'Bundle-Version': project.version,
             'Bundle-RequiredExecutionEnvironment': 'JavaSE-1.8',
             'Bundle-Activator': 'com.checkmarx.plugin.eclipse.HelloWorld',

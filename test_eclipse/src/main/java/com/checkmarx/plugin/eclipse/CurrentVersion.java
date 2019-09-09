@@ -7,15 +7,15 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.jface.dialogs.MessageDialog;
 
-public class SampleHandler extends AbstractHandler {
+public class CurrentVersion extends AbstractHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
 		MessageDialog.openInformation(
 				window.getShell(),
-				"HelloWorldPlugin",
-				"Hello, Eclipse world");
+				"Current Version",
+				HelloWorld.getDefault().getCurrentVersion ());
 		return null;
 	}
 }

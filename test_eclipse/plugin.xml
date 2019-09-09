@@ -2,60 +2,53 @@
 <?eclipse version="3.4"?>
 <plugin>
 
-   <extension
-         point="org.eclipse.ui.commands">
-      <category
-            id="HelloWorldPlugin.commands.category"
-            name="Sample Category">
-      </category>
-      <command
-            categoryId="HelloWorldPlugin.commands.category"
-            name="Sample Command"
-            id="HelloWorldPlugin.commands.sampleCommand">
-      </command>
-   </extension>
-   <extension
-         point="org.eclipse.ui.handlers">
-      <handler
-            class="com.checkmarx.plugin.eclipse.SampleHandler"
-            commandId="HelloWorldPlugin.commands.sampleCommand">
-      </handler>
-   </extension>
-   <extension
-         point="org.eclipse.ui.bindings">
-      <key
-            commandId="HelloWorldPlugin.commands.sampleCommand"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            contextId="org.eclipse.ui.contexts.window"
-            sequence="M1+6">
-      </key>
-   </extension>
-   <extension
-         point="org.eclipse.ui.menus">
-      <menuContribution
-            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
-         <menu
-               id="HelloWorldPlugin.menus.sampleMenu"
-               label="Sample Menu"
-               mnemonic="M">
-            <command
-                  commandId="HelloWorldPlugin.commands.sampleCommand"
-                  id="HelloWorldPlugin.menus.sampleCommand"
-                  mnemonic="S">
+      <extension point="org.eclipse.ui.startup">
+            <startup class="com.checkmarx.plugin.eclipse.StartupHandler"/>
+      </extension>
+      <extension point="org.eclipse.ui.commands">
+            <category id="HelloWorldPlugin.commands.category" name="Sample Category">
+            </category>
+            <command categoryId="HelloWorldPlugin.commands.category" name="Current Version" id="HelloWorldPlugin.commands.currentVersion">
             </command>
-         </menu>
-      </menuContribution>
-      <menuContribution
-            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
-         <toolbar
-               id="HelloWorldPlugin.toolbars.sampleToolbar">
-            <command
-                  id="HelloWorldPlugin.toolbars.sampleCommand"
-                  commandId="HelloWorldPlugin.commands.sampleCommand"
-                  tooltip="Say hello world">
+            <command categoryId="HelloWorldPlugin.commands.category" name="Latest Version" id="HelloWorldPlugin.commands.checkUpdate">
             </command>
-         </toolbar>
-      </menuContribution>
-   </extension>
+            <command categoryId="HelloWorldPlugin.commands.category" name="Install Update" id="HelloWorldPlugin.commands.installUpdate">
+
+            </command>
+      </extension>
+      <extension point="org.eclipse.ui.handlers">
+            <handler class="com.checkmarx.plugin.eclipse.CurrentVersion" commandId="HelloWorldPlugin.commands.currentVersion">
+            </handler>
+            <handler class="com.checkmarx.plugin.eclipse.LatestVersionHandler" commandId="HelloWorldPlugin.commands.checkUpdate">
+            </handler>
+            <handler class="com.checkmarx.plugin.eclipse.InstallHandler" commandId="HelloWorldPlugin.commands.installUpdate">
+            </handler>
+      </extension>
+      <extension point="org.eclipse.ui.bindings">
+            <key commandId="HelloWorldPlugin.commands.sampleCommand" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration" contextId="org.eclipse.ui.contexts.window" sequence="M1+6">
+            </key>
+      </extension>
+      <extension point="org.eclipse.ui.menus">
+            <menuContribution locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+                  <menu id="HelloWorldPlugin.menus.sampleMenu" label="Sample Menu" mnemonic="M">
+                        <command commandId="HelloWorldPlugin.commands.currentVersion" id="HelloWorldPlugin.menus.currentVersion">
+                        </command>
+                        <command commandId="HelloWorldPlugin.commands.checkUpdate" id="HelloWorldPlugin.menus.checkUpdate">
+                        </command>
+                        <command commandId="HelloWorldPlugin.commands.installUpdate" id="HelloWorldPlugin.menus.installUpdate">
+                        </command>
+                  </menu>
+            </menuContribution>
+            <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+                  <toolbar id="HelloWorldPlugin.toolbars.sampleToolbar">
+                        <command id="HelloWorldPlugin.toolbars.currentVersion" commandId="HelloWorldPlugin.commands.currentVersion" tooltip="Show current plugin version">
+                        </command>
+                        <command id="HelloWorldPlugin.toolbars.checkUpdate" commandId="HelloWorldPlugin.commands.checkUpdate" tooltip="Check for update">
+                        </command>
+                        <command id="HelloWorldPlugin.toolbars.installUpdate" commandId="HelloWorldPlugin.commands.installUpdate" tooltip="Check for update">
+                        </command>
+                  </toolbar>
+            </menuContribution>
+      </extension>
 
 </plugin>

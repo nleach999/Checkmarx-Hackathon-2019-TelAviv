@@ -27,6 +27,7 @@ public class PluginDownloader implements Runnable {
     private URI _targetURI;
     private Function<InputStream, Boolean> _sigFunc = null;
     private Consumer<String> _progressCallback = null;
+    private Consumer<Boolean> _dlCompleteCallback = null;
     private long _maxMB = MAX_PLUGIN_MB;
     private String _destinationDirectory = System.getProperty("user.dir");
     private String _destinationFilename = "download.zip";
@@ -61,6 +62,11 @@ public class PluginDownloader implements Runnable {
         _httpClient = HttpClients.createDefault();
 
         return _executor.submit(this);
+    }
+
+    public Future<?> doDownload(Consumer<String> progressCallback, Consumer<Boolean> dlCompleteCallback) {
+        _dlCompleteCallback = dlCompleteCallback;
+        return doDownload(progressCallback);
     }
 
     public static Builder builder() {
@@ -108,6 +114,11 @@ public class PluginDownloader implements Runnable {
     private void reportProgress(String progressString) {
         if (_progressCallback != null)
             _progressCallback.accept(progressString);
+    }
+
+    private void reportCompletion(Boolean done) {
+        if (_dlCompleteCallback != null)
+            _dlCompleteCallback.accept(done);
     }
 
     private long _totalBytesRead = 0;
@@ -172,7 +183,9 @@ public class PluginDownloader implements Runnable {
 
                         fileOut.flush();
                         fileOut.close();
-
+                        
+                        reportCompletion (isDownloadComplete() );
+                        
                     } catch (IOException e) {
                         reportProgress(e.getMessage());
                     } finally {

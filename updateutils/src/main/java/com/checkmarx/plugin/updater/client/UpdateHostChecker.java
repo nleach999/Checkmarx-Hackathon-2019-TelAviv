@@ -301,6 +301,16 @@ public class UpdateHostChecker {
             return this;
         }
 
+        public Builder withDomainSuffixes (Iterable<String> domainSuffixes)
+        {
+            for (String domainSuffix : domainSuffixes)
+                _inst._domainSuffixes
+                        .add((domainSuffix.startsWith(".")) ? (domainSuffix.substring(1, domainSuffix.length()))
+                                : (domainSuffix));
+
+            return this;
+        }
+
         public Builder withDomainSuffixes(String[] domainSuffixes) {
 
             for (String domainSuffix : domainSuffixes)
