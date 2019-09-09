@@ -2,16 +2,24 @@
 
  _Documentation is currently a work in progress, more to come._
 
+## Table of Contents
+- [**Background**](#background) 
+- [**Development Headstart**](#development-headstart)
+- [**Deployment Methodology**](#deployment-methodology)
+    - [**Locating a List of Plugin Payloads**](#locating-a-list-of-plugin-payloads)
+    - [**Choosing Plugin Updates to Download**](#choosing-plugin-updates-to-download)
+    - [**Installing the Plugin Update**](#installing-the-plugin-update)
+
 ## Background
 
-When Checkmarx customers install a new release of SAST, developers that use IDE plugins must update their plugins to be compatible with the new release.  Some IDEs have an integrated "marketplace" that can notify plugin users when an update is available, but this is not universal across all IDEs.  The use of an IDE marketplace, though efficient, may not be feasible for some organizations.  Large organizations, for example, may have policies requring approval before installing third-party components.  In some cases, access to public Internet sites may be restricted, minimizing the ability for the IDE marketplace to phone home to detect available updates.
+When Checkmarx customers install a new release of SAST, developers that use IDE and CI plugins must update them to be compatible with the new release.  Some IDEs/CIs have an integrated "marketplace" that can notify plugin users when an update is available, but this is not universal across all of them.  The use of an IDE/CI marketplace, though efficient, may not be feasible for some organizations.  Large organizations, for example, may have policies requring approval before installing third-party components.  In some cases, access to public Internet may be restricted, minimizing the ability for the IDE/CI marketplace to phone home to detect available updates.
 
-IDEs that do not have plugin updates available through the marketplace often require manual deployment of plugin updates. When there are thousands of developers, coordinating manual plugin updates across multiple IDEs can be difficult.  Even for teams with smaller numbers of developers, coordinating updates can be difficult when considering that the entire development team may be geographically dispersed.
+IDEs/CIs that do not have plugin updates available through the marketplace often require manual deployment of these updates. When there are thousands of developers, coordinating manual plugin updates across multiple IDEs/CIs can be difficult.  Even for teams with smaller numbers of developers, coordinating updates can be difficult when considering the entire development team may be geographically dispersed.
 
 This project is part of the 2019 Checkmarx Hackathon in Tel Aviv, Israel.  The project goal is to:
 
-* Design a deployment methodology compatible with small and large development teams
-* Create the logic libraries needed to enable IDE plugin updates
+* Design a deployment methodology compatible with both small and large development teams
+* Create the logic libraries needed to enable IDE/CI plugin updates
 * Show a proof-of-concept plugin in Eclipse that can perform the update
 
 
