@@ -183,18 +183,30 @@ If the _cxpluginupdate_ server is properly serving the plugin update binaries, y
 
 ![Eclipse](images/eclipse8.png "Eclipse")
 ### Testing Visual Studio Updates
+
 1.Unzip the CXPlugin_01.01.01.zip and double click the .vsix file to install the extension on your Visual Studio 2017 (only tested with this version).
-![Eclipse](images/UpgradePlugin.png "Extensions")
+
+![Eclipse](images/InstallExtension.png "Extensions")
+
 2. During installation close all instances of Visual studio .
 3.once installation completes , you should be able to see the extension installed . open Visual Studio ->tools->extension and updates.
+
 ![Eclipse](images/VSExtension.png "Extensions")
+
 3.Open a project of your choice in Visual Studio to check for new CX plugins.you should be able to right click the project (important to select the project only) and see the command to check for new updates.
+
 ![Eclipse](images/RightClickVS.png "RightClick")
-4.The plugin will prompt you if you wish to look for new updates . press ok .
+
+4.The plugin will prompt you if you wish to look for new updates . press ok if you wish to proceed.
+
 ![Eclipse](images/CheckForLatestVersion.png "RightClick")
+
 5.Before installation , you are prompted to confirm the installation . click ok to proceed .
+
 ![Eclipse](images/InstallingLatestVersion.png "RightClick")
+
 6.The plugin installation wizard will open .follow the wizard to upgrade the plugin .
+
 ![Eclipse](images/UpgradePlugin.png "RightClick")
 
 
