@@ -30,7 +30,7 @@
       </extension>
       <extension point="org.eclipse.ui.menus">
             <menuContribution locationURI="menu:org.eclipse.ui.main.menu?after=additions">
-                  <menu id="HelloWorldPlugin.menus.sampleMenu" label="Sample Menu" mnemonic="M">
+                  <menu id="HelloWorldPlugin.menus.sampleMenu" label="CxPlugin Update" mnemonic="C">
                         <command commandId="HelloWorldPlugin.commands.currentVersion" id="HelloWorldPlugin.menus.currentVersion">
                         </command>
                         <command commandId="HelloWorldPlugin.commands.checkUpdate" id="HelloWorldPlugin.menus.checkUpdate">

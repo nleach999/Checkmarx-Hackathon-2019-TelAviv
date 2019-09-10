@@ -16,8 +16,13 @@ import com.checkmarx.plugin.updater.client.exceptions.MisconfiguredException;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -60,14 +65,18 @@ public class HelloWorld extends AbstractUIPlugin {
 
 	private void onDownloadComplete(Boolean done) {
 
+		String msg = "DOWNLOAD FAILED";
 		if (done) {
+			msg = "Download complete, please reboot.";
 			System.out.println("Download completed successfully");
 		} else
 			System.out.println("Download FAILED");
 
 		installNewPlugin();
 
-		displayVersionDialog(done.toString());
+		displayVersionDialog(msg, _version);
+
+		PlatformUI.getWorkbench().restart();
 
 	}
 
@@ -103,23 +112,47 @@ public class HelloWorld extends AbstractUIPlugin {
 		if (v == null)
 			return false;
 
-		String versionForCompare = String.format("%s.%s.%s", v.getRegexMatches().group("major"),
-				v.getRegexMatches().group("minor"), v.getRegexMatches().group("revision"));
+		String versionForCompare = getVersionString(v);
 
 		return versionForCompare.compareTo(getDefault().getCurrentVersion()) > 0;
 	}
 
-	public void displayVersionDialog(String title) {
+	private static String getVersionString(LatestVersion v) {
+		String retVal = String.format("%s.%s.%s", v.getRegexMatches().group("major"),
+				v.getRegexMatches().group("minor"), v.getRegexMatches().group("revision"));
+
+		if (v.getRegexMatches().group("custom") != null)
+			retVal = String.format("%s.%s", retVal, v.getRegexMatches().group("custom"));
+
+		return retVal;
+
+	}
+
+	public void displayVersionDialog(String title, LatestVersion v) {
 		Display display = new Display();
-		Shell dialog = new Shell(display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-		dialog.setText(title);
-		dialog.setSize(450, 200);
-		dialog.open();
-		while (!dialog.isDisposed()) {
+
+		Shell shell = new Shell(display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
+		shell.setText(title);
+		shell.setLayout(new FillLayout());
+
+		Composite parent = new Composite(shell, SWT.NONE);
+		parent.setLayout(new GridLayout(2, true));
+
+		new Label(parent, SWT.LEFT).setText("Version:");
+		new Label(parent, SWT.RIGHT).setText(getVersionString(v));
+
+		new Label(parent, SWT.LEFT).setText("Filename:");
+		new Label(parent, SWT.RIGHT).setText(v.getFilename());
+
+		new Label(parent, SWT.LEFT).setText("Location: " + v.getFileURI());
+
+		shell.setSize(400, 200);
+		shell.open();
+
+		while (!shell.isDisposed()) {
 			if (!display.readAndDispatch())
 				display.sleep();
 		}
-		display.dispose();
 
 	}
 
@@ -130,7 +163,7 @@ public class HelloWorld extends AbstractUIPlugin {
 		_version = v;
 
 		if (isVersionGreaterThanCurrent(v))
-			displayVersionDialog("New Version Available");
+			displayVersionDialog("New Version Available", _version);
 	}
 
 	public void initialize(Iterable<String> domainSuffixes) {
