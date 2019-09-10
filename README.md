@@ -1,6 +1,6 @@
 # Checkmarx Plugin Updater
 
- _Documentation is currently a work in progress, more to come._
+_For Hackathon 2019 Evaluators, you will want to visit the [instructions for evaluating the project](#evaluating-the-project)._
 
 ## Table of Contents
 - [**Background**](#background) 
@@ -9,6 +9,9 @@
     - [**Locating a List of Plugin Payloads**](#locating-a-list-of-plugin-payloads)
     - [**Choosing Plugin Updates to Download**](#choosing-plugin-updates-to-download)
     - [**Installing the Plugin Update**](#installing-the-plugin-update)
+- [**Evaluating the Project**](#evaluating-the-project)
+    - [**Environment Pre-Requisites**](#environment-pre-requisites)
+    - [**Testing Plugin Updates**](#testing-plugin-updates)
 
 ## Background
 
@@ -78,13 +81,103 @@ size checking before download prevents someone injecting an extremely large payl
 Libraries detect updates and perform downloads.  Logic to install is left to the plugin code itself.
 
 
+# Evaluating the Project
+
+Binary builds have been provided to assist in evaluating the project without the need to compile the project yourself.  There are some environmental pre-requisites that are required.  This section will explain how to set up the pre-requisites and perform the evaluation.
 
 
+## Environment Pre-Requisites
+
+This project is about downloading updated plugins from a remote server.  It is therefore required that a web server be available to serve the plugin update files.
+
+### The "cxpluginupdate" Host
+
+A server with the name _cxpluginupdate_ is the first pre-requisite.  Your choices are:
+
+* Install a physical or virtual machine with the name _cxpluginupdate_ that is attached to your network.
+* Adjust your **hosts** file to resolve _cxpluginupdate_ to the _localhost_ loopback address.
+
+#### Adjusting the **hosts** File on Windows
+
+1. Open your favorite text editor as an administrator (Notepad, Notepad++, etc)
+2. Open the file **C:\Windows\System32\drivers\etc\hosts** in the open text editor
+3. Append the line "127.0.0.1 cxpluginupdate" at the bottom of the file (as shown in the image below)
+
+![Hosts File](images/hosts.png "Hosts File")
+
+### The Web Server
+
+There are several choices for installing a web server on your _cxpluginupdate_ host:
+
+* Install IIS with directory browsing enabled.
+* Run the Docker container web server provided in [the test_webserver directory](test_webserver)).
+
+The plugin update [binaries](TEST_BINARIES) should be placed in the root directory of the web server.
+
+If the option you have chosen is working correctly, you should be able to navigate to [http://cxpluginupdate](http://cxpluginupdate) and see a listing of files located in the directory as shown in the image below.
+
+![Directory listing](images/cxpluginupdate_list.png "Plugin directory listing")
 
 
+**NOTE:**  It is not possible to run both IIS and the Docker container web server at the same time.  You will get error messages such as "port is in use by another process" when you start one of the options.  If you have an existing IIS installation but decide to use the Docker container web server, you may need to stop IIS or bind it to a port other than 80.
+
+#### Installing IIS with Directory Browsing
+
+1. Open the **Internet Information Services Manager**
+2. Select the site that will be serving the update plugins and double click the **directory browsing** applet (shown in the picture below)
+![Open Directory Browsing Settings](images/dir_browse1.png "Directory Browsing")
+
+3. Click "Enable" to enable the directory browsing, apply the settings.
+
+![Open Directory Browsing Settings](images/dir_browse2.png "Directory Browsing")
+
+#### Using the Docker Container Web Server
+
+Please look at the [README.md](test_webserver) in the **test_webserver** folder for instructions about how to use the Dockerized test web server.
+
+## Testing Plugin Updates
+
+If the _cxpluginupdate_ server is properly serving the plugin update binaries, you can test the plugin updates.
+
+### Testing Eclipse Plugin Updates
+
+1. Download a recent version of the [Eclipse IDE](https://www.eclipse.org/downloads/packages/release/2019-06/r/eclipse-ide-java-developers).  It is suggested that you run it from the standalone package rather than using the Windows installer. 
+
+    * You may also need to install the [JDK](https://www.oracle.com/java/technologies/jdk8-downloads.html); this has been tested with JDK 1.8.
+
+2. This example uses the **eclipse/dropins** folder to simulate plugin updates.  (Full plugins that are installed through the Eclipse software manager are a bit more complex to build, but the effect of the plugin update would be similar to this example.)  Drop the file [TestPlugin-00.00.01.jar](TEST_BINARIES/eclipse) into the **eclipse/dropins** folder.
+
+3. Open powershell in the **eclipse** directory and execute the ``.\eclipse -clean`` command to start Eclipse.
+
+4. On startup, the version check starts in the background.  You can navigate to the **CxPlugin Update->Current Version** menu item to view the currently installed version.
+
+![Eclipse](images/eclipse1.png "Eclipse")
+
+![Eclipse](images/eclipse2.png "Eclipse")
+
+5. If the web server is working properly, a dialog will show that indicates a new version is available.
+
+![Eclipse](images/eclipse3.png "Eclipse")
 
 
+6. The **CxPlugin Update->Latest Version** and **CxPlugin Update->Install Update** are now enabled (since a new version has been detected).
 
+![Eclipse](images/eclipse4.png "Eclipse")
 
+7. Choosing **CxPlugin Update->Latest Version** will show the latest version of the plugin available.
 
+![Eclipse](images/eclipse5.png "Eclipse")
 
+8. Choosing **CxPlugin Update->Install Update** will start the install of the new plugin.
+
+![Eclipse](images/eclipse6.png "Eclipse")
+
+9. When the update is complete, you will see a dialog indicating that Eclipse needs to be restarted.
+
+![Eclipse](images/eclipse7.png "Eclipse")
+
+10. Restart Eclipse, using the same command to start (``.\eclipse -clean``)
+
+11. When Eclipse starts, selecting **CxPlugin Update->Current Version** will show that the new version has been installed.  Also note that **CxPlugin Update->Latest Version** and **CxPlugin Update->Install Update** are disabled since no newer update has been detected.
+
+![Eclipse](images/eclipse8.png "Eclipse")
