@@ -12,6 +12,7 @@ _For Hackathon 2019 Evaluators, you will want to visit the [instructions for eva
 - [**Evaluating the Project**](#evaluating-the-project)
     - [**Environment Pre-Requisites**](#environment-pre-requisites)
     - [**Testing Plugin Updates**](#testing-plugin-updates)
+    - [**Testing the Update Logic**](#testing-the-update-logic)
 
 ## Background
 
@@ -55,7 +56,7 @@ As an example of the domain name expansion, consider an adapter with the domain 
 * cxpluginupdate.microsoft.com
 * cxpluginupdate.com
 
-An attempt will be made to connect to each host to obtain a list of available plugins.  The first host that responds is chosen as the source of the plugin update download.
+The domain name is resolved from the canonical name of the current host assigned to each adapter.  An attempt will be made to connect to each host from the expanded domain names to obtain a list of available plugins.  The first host that responds is chosen as the source of the plugin update download.
 
 The approach taken has the following benefits:
 
@@ -181,3 +182,73 @@ If the _cxpluginupdate_ server is properly serving the plugin update binaries, y
 11. When Eclipse starts, selecting **CxPlugin Update->Current Version** will show that the new version has been installed.  Also note that **CxPlugin Update->Latest Version** and **CxPlugin Update->Install Update** are disabled since no newer update has been detected.
 
 ![Eclipse](images/eclipse8.png "Eclipse")
+
+
+## Testing the Update Logic
+
+The .jar files for the Eclipse plugin have a command line test capability.  To execute the command line test:
+
+```
+> java -jar .\TestPlugin-00.00.01.jar
+
+usage: cmdtest [OPTIONS]
+ -?,--help                        Print argument usage help.
+ -d,--domain <domain suffix>      Add search domain suffix. Maybe
+                                  repeated, also accepts multiple
+                                  arguments.
+ -g,--regex-group <group name>    A named group extracted with the regex
+                                  match. This will be displayed if group
+                                  matches are found. Maybe repeated, also
+                                  accepts multiple arguments.
+ -h,--host <arg>                  Override the default hostname used to
+                                  find where the updates are hosted.
+                                  Defaults to "cxpluginupdate".
+    --max-dl-mbytes <megabytes>   The maximum size, in megabytes, for the
+                                  plugin to allow download.
+    --no-download                 Do not download the latest version of
+                                  the plugin detected through the version
+                                  resolution.
+    --regex <arg>                 The regular expression used to detect
+                                  matches in listing entries returned from
+                                  the update host.
+    --regex-name <arg>            The name of the property holding the
+                                  regular expression in the regular
+                                  expression properties file.
+    --regex-props <file path>     A path to a .properties file containing
+                                  regular expressions assigned to
+                                  individual properties.
+ -s,--skip-local                  Skip domain suffix resolution of domain
+                                  suffixes assigned to network adapters on
+                                  local machine.
+ -t,--timeout <seconds>           Timeout for discovering available
+                                  updates. Default: 60 seconds
+
+```
+
+An example execution shows the logic to find the latest version of a plugin binary and download it:
+
+```
+> java -jar .\build\libs\TestPlugin-00.00.01.jar --regex-props .\cmdline_tester\regex.properties --regex-name jar-example 
+-g major minor revision custom
+
+Waiting for update check to respond....
+Latest version retrieved.
+LatestVersion: TestPlugin-00.00.02.jar (http://cxpluginupdate/TestPlugin-00.00.02.jar)
+Matched groups:
+Name: [major] Value: [00]
+Name: [minor] Value: [00]
+Name: [revision] Value: [02]
+Name: [custom] Value: [null]
+Progress Callback: Checking content length of /TestPlugin-00.00.02.jar
+Progress Callback: Downloading 1MB
+Progress Callback: Downloaded 10%
+Progress Callback: Downloaded 30%
+Progress Callback: Downloaded 70%
+Progress Callback: Downloaded 80%
+Progress Callback: Downloaded 100%
+Download completed successfully
+
+```
+
+The plugin binary payload is downloaded to the current working directory.
+

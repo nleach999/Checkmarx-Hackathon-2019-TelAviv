@@ -52,7 +52,7 @@ public class DomainSuffixResolver {
 
             while (a.hasMoreElements()) {
                 InetAddress addr = a.nextElement();
-                for (String fqdn : FQDNExpander.expandHostnames(addr.getHostName())) {
+                for (String fqdn : FQDNExpander.expandHostnames(addr.getCanonicalHostName())) {
                     String suffix = suffixFromFQDN(fqdn);
                     if (suffix != null)
                         resolved.add(suffix);
