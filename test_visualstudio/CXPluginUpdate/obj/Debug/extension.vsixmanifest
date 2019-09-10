@@ -1,6 +1,6 @@
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
   <Metadata>
-    <Identity Id="492475ce-5844-4dd5-b495-c0314eab9b9a" Version="1.4" Language="en-US" Publisher="Ariel Lumbroso" />
+    <Identity Id="492475ce-5844-4dd5-b495-c0314eab9b9a" Version="1.5" Language="en-US" Publisher="Ariel Lumbroso" />
     <DisplayName>CXPluginUpdate</DisplayName>
     <Description xml:space="preserve">checks and downloads latest cx plugin for VS.</Description>
   </Metadata>

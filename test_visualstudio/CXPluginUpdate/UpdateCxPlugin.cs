@@ -211,7 +211,6 @@ namespace CXPluginUpdate
 
             process.StartInfo.FileName = config.AppSettings.Settings["VSIXInstaller"].Value;
             
-
             String ZipPath = file;
             String extractPath = subdir;
 
