@@ -13,7 +13,6 @@ public class InstallHandler extends AbstractHandler {
 
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        String pwd = System.getProperty("user.dir");
         IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
         MessageDialog.openInformation(window.getShell(), "Install Notification",
                 "Installing from: " + HelloWorld.getDefault().getLatestVersion().getFileURI() + ", please wait");

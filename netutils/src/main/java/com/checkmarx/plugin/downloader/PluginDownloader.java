@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -25,7 +24,6 @@ public class PluginDownloader implements Runnable {
     private static final long BYTES_TO_MB_DIVISOR = 1000000;
 
     private URI _targetURI;
-    private Function<InputStream, Boolean> _sigFunc = null;
     private Consumer<String> _progressCallback = null;
     private Consumer<Boolean> _dlCompleteCallback = null;
     private long _maxMB = MAX_PLUGIN_MB;
@@ -89,10 +87,6 @@ public class PluginDownloader implements Runnable {
             return this;
         }
 
-        public PluginDownloader.Builder withSignatureVerificationFunction(Function<InputStream, Boolean> sigVerifier) {
-            _inst._sigFunc = sigVerifier;
-            return this;
-        }
 
         public PluginDownloader.Builder withMaxPluginSizeInMegabytes(long megaBytes) {
             _inst._maxMB = megaBytes;

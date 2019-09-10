@@ -34,12 +34,6 @@ public class CmdTest {
     private static final String OPTION_HELP_LONG = "help";
     private static final String OPTION_HELP = OPTION_HELP_SHRT;
 
-    private static final String OPTION_KEY_FILE_LONG = "key-file";
-    private static final String OPTION_KEY_FILE = OPTION_KEY_FILE_LONG;
-
-    private static final String OPTION_SKIP_VERIFY_LONG = "skip-verify";
-    private static final String OPTION_SKIP_VERIFY = OPTION_SKIP_VERIFY_LONG;
-
     private static final String OPTION_MAX_DL_LONG = "max-dl-mbytes";
     private static final String OPTION_MAX_DL = OPTION_MAX_DL_LONG;
 
@@ -119,13 +113,6 @@ public class CmdTest {
 
         _opts.addOption(Option.builder().hasArg().longOpt(OPTION_MAX_DL_LONG).argName("megabytes")
                 .desc("The maximum size, in megabytes, for the plugin to allow download.").build());
-
-        OptionGroup signatureGroup = new OptionGroup();
-        signatureGroup.addOption(Option.builder().longOpt(OPTION_SKIP_VERIFY_LONG).hasArg(false)
-                .desc("Skip the signature verification of the downloaded payload.").build());
-        signatureGroup.addOption(Option.builder().hasArg().longOpt(OPTION_KEY_FILE_LONG)
-                .desc("A path to a file with a public key used to verify the signature of the plugin.").build());
-        _opts.addOptionGroup(signatureGroup);
 
     }
 

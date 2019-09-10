@@ -92,7 +92,6 @@ public class HelloWorld extends AbstractUIPlugin {
 			old.delete();
 			downloaded.delete();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -173,7 +172,6 @@ public class HelloWorld extends AbstractUIPlugin {
 			_hc = UpdateHostChecker.builder().withDomainSuffixes(_localSuffixes).withFieldExtractRegex(_matchRegex)
 					.build();
 		} catch (MisconfiguredException | BadBuilderException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
