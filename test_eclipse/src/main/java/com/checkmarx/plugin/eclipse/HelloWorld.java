@@ -145,7 +145,7 @@ public class HelloWorld extends AbstractUIPlugin {
 
 		new Label(parent, SWT.LEFT).setText("Location: " + v.getFileURI());
 
-		shell.setSize(400, 200);
+		shell.setSize(600, 200);
 		shell.open();
 
 		while (!shell.isDisposed()) {
